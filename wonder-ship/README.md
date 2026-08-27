@@ -208,24 +208,36 @@ illustrated, paginated and correct. Nothing is a placeholder any more.
 
 ### Going through Canva
 
-Two import routes, depending on what you want:
+**Read this before relying on the Canva copies.**
 
-**Book format** (`canva/*.html`) → a 24-page square book you can lay new art into.
-**Presentation format** (`presentation/*-presentation.html`) → a 24-slide 16:9 deck.
+Canva's importer does not render an imported document — it rebuilds it into
+Canva's own native elements. On this artwork that conversion degrades the
+figures (limbs and outlines drop out). That happened through every route
+tried: HTML with inline SVG, HTML with the artwork pre-rasterised, the print
+PDF, and finally HTML where each page is a single flat PNG. The source files
+are not at fault — the same files render correctly in browsers, in the print
+pipeline and in e-readers, all of which were checked visually.
 
-Both are annotated with `data-document-role="page"`, `data-label` and
-`data-speaker-notes`, so Canva turns each page into its own artboard with its teacher
-cue already attached as speaker notes. The repo is public, so the raw URLs import
-directly:
+The Canva imports exist and each has 24 pages, but **open them and look before
+using them**. Canva's full-resolution export could not be checked from the
+build environment (the download host is blocked there), so it is possible the
+degradation is only in Canva's preview and the export is fine. Judge it in the
+editor.
 
-```
-https://raw.githubusercontent.com/7keyammo/UNITE-Website/claude/wonder-ship-books-gpdxew/wonder-ship/canva/book-01-into-the-deep.html
-https://raw.githubusercontent.com/7keyammo/UNITE-Website/claude/wonder-ship-books-gpdxew/wonder-ship/presentation/book-01-into-the-deep-presentation.html
-```
+**If the Canva copies look wrong**, use one of these instead — all verified:
 
-Once inside Canva: swap `Baloo 2` (story) and `Nunito` (UI) in from the font picker —
-both are free there and are already named in the files with safe fallbacks. Then
-**Share → Download → PDF Print**, with crop marks and bleed on.
+1. `print/*.pdf` is already a finished, sellable book. Upload it straight to
+   KDP or a printer; Canva is not needed in the path at all.
+2. Upload `print/*.pdf` to Canva by hand through Canva's own web uploader,
+   which is a different code path from the API import used here.
+3. Edit the source and rebuild: text lives in `build/books.py`, artwork in
+   `build/art.py`, and `render.py` regenerates the PDFs.
+
+The Canva builds are `canva/*.html` (24 square book pages) and
+`presentation/*-presentation-canva.html` (24 sixteen-by-nine slides). Both are
+made of flat page images, so page text is not editable inside Canva — text
+edits belong in `build/books.py`. Both carry `data-document-role="page"` and
+`data-label`, so each page lands as its own named artboard.
 
 ## Open items
 
