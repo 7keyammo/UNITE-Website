@@ -11,6 +11,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import art                                          # noqa: E402
+import raster                                       # noqa: E402
 from content import all_books                       # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -30,7 +31,7 @@ body{{background:#333;font-family:{UI}}}
 .slide{{position:relative;width:{W}px;height:{H}px;margin:0 auto 24px;overflow:hidden;
   background:var(--sand);display:flex}}
 .left{{position:relative;flex:0 0 58%;overflow:hidden}}
-.left svg{{position:absolute;inset:0;width:100%;height:100%}}
+.left svg,.left img{{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}}
 .right{{flex:1 1 auto;display:flex;flex-direction:column;background:#fffaf0}}
 .copy{{flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;
   padding:56px 64px;text-align:center;font:800 52px/1.3 {ST};color:var(--deep)}}
@@ -45,7 +46,7 @@ body{{background:#333;font-family:{UI}}}
 .wide{{flex:1 1 100%;position:relative;display:flex;align-items:center;
   justify-content:center;text-align:center;color:#fff;padding:80px}}
 .wide .bg{{position:absolute;inset:0;overflow:hidden}}
-.wide .bg svg{{width:100%;height:100%}}
+.wide .bg svg,.wide .bg img{{width:100%;height:100%;object-fit:cover}}
 .scrim{{position:absolute;inset:0}}
 .in{{position:relative;z-index:1;max-width:30ch}}
 .wide.cover{{align-items:flex-end;padding-bottom:74px}}
@@ -72,7 +73,13 @@ h2{{font:800 82px/1.1 {ST};margin:18px 0 26px}}
 """
 
 
+RASTER = False
+
+
 def svg(b, n):
+    if RASTER:
+        return (f'<img src="{raster.data_uri(b, n)}" alt="" '
+                f'style="width:100%;height:100%;object-fit:cover;display:block">')
     return (f'<svg viewBox="0 0 1000 640" preserveAspectRatio="xMidYMid slice" role="img" '
             f'aria-hidden="true">{art.bleed(b, n)}{art.scene(b, n)}</svg>')
 
@@ -125,9 +132,14 @@ def render(book):
 
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
-    for b in all_books():
-        doc = render(b)
-        with open(os.path.join(OUT, b["slug"] + "-presentation.html"), "w", encoding="utf-8") as f:
-            f.write(doc)
-        print(f'{b["slug"]}-presentation.html — {doc.count("data-document-role")} slides, '
-              f'{len(doc)/1024:.0f} KB')
+    raster.render_all()
+    books = all_books()
+    for is_raster, suffix in ((False, "-presentation.html"), (True, "-presentation-canva.html")):
+        globals()["RASTER"] = is_raster
+        for b in books:
+            doc = render(b)
+            with open(os.path.join(OUT, b["slug"] + suffix), "w", encoding="utf-8") as f:
+                f.write(doc)
+            kind = "raster, for Canva" if is_raster else "vector, for PDF"
+            print(f'{b["slug"]}{suffix} — {doc.count("data-document-role")} slides, '
+                  f'{len(doc)/1024:.0f} KB ({kind})')

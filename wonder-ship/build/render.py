@@ -10,10 +10,12 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import art                                          # noqa: E402
+import raster                                       # noqa: E402
 from content import all_books                       # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT = os.path.join(ROOT, "canva")
+CANVA = os.path.join(ROOT, "canva")
+SRC = os.path.join(ROOT, "print")
 
 PAGE = 816          # 8.5 in @ 96 dpi
 SAFE = 46           # 0.5 in safe margin (approx)
@@ -31,7 +33,7 @@ body{{background:#4a4a4a;font-family:{UI_FONT}}}
 .page{{position:relative;width:{PAGE}px;height:{PAGE}px;margin:0 auto 26px;
   overflow:hidden;background:var(--sand);display:flex;flex-direction:column}}
 .art{{position:relative;flex:1 1 auto;min-height:0;overflow:hidden}}
-.art svg{{position:absolute;inset:0;width:100%;height:100%;display:block}}
+.art svg,.art img{{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover}}
 .story{{flex:0 0 auto;padding:18px {SAFE}px 12px;text-align:center;
   font:700 26px/1.3 {STORY_FONT};color:var(--deep);background:#fffaf0}}
 .story .sp{{display:block;height:.44em}}
@@ -46,7 +48,7 @@ body{{background:#4a4a4a;font-family:{UI_FONT}}}
 .full{{position:relative;flex:1 1 auto;display:flex;flex-direction:column;
   align-items:center;justify-content:center;text-align:center;padding:{SAFE}px;color:#fff}}
 .full .bg{{position:absolute;inset:0;overflow:hidden}}
-.full .bg svg{{width:100%;height:100%;display:block}}
+.full .bg svg,.full .bg img{{width:100%;height:100%;display:block;object-fit:cover}}
 .full .scrim{{position:absolute;inset:0;background:
   linear-gradient(180deg,rgba(8,26,34,.80),rgba(8,26,34,.32) 44%,
   rgba(8,26,34,.36) 58%,rgba(8,26,34,.82))}}
@@ -81,7 +83,15 @@ body{{background:#4a4a4a;font-family:{UI_FONT}}}
 """
 
 
+RASTER = False          # flipped per output by main()
+
+
 def svg(book, page, par="xMidYMid slice"):
+    """Vector by default. In raster mode the scene becomes a PNG so Canva
+    imports it faithfully; the page text stays real text either way."""
+    if RASTER:
+        return (f'<img src="{raster.data_uri(book, page)}" alt="" '
+                f'style="width:100%;height:100%;object-fit:cover;display:block">')
     return (f'<svg viewBox="0 0 1000 640" preserveAspectRatio="{par}" role="img" '
             f'aria-hidden="true">{art.bleed(book, page)}{art.scene(book, page)}</svg>')
 
@@ -136,9 +146,17 @@ def render(book):
 
 
 if __name__ == "__main__":
-    os.makedirs(OUT, exist_ok=True)
-    for b in all_books():
-        doc = render(b)
-        with open(os.path.join(OUT, b["slug"] + ".html"), "w", encoding="utf-8") as f:
-            f.write(doc)
-        print(f'{b["slug"]}.html — {doc.count("data-document-role")} pages, {len(doc)/1024:.0f} KB')
+    os.makedirs(CANVA, exist_ok=True)
+    os.makedirs(SRC, exist_ok=True)
+    raster.render_all()
+    books = all_books()
+    for out_dir, is_raster, suffix in ((SRC, False, ".html"), (CANVA, True, ".html")):
+        globals()["RASTER"] = is_raster
+        for b in books:
+            doc = render(b)
+            path = os.path.join(out_dir, b["slug"] + suffix)
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(doc)
+            kind = "raster, for Canva" if is_raster else "vector, for PDF"
+            print(f'{os.path.relpath(path, ROOT)} — {doc.count("data-document-role")} pages, '
+                  f'{len(doc)/1024:.0f} KB ({kind})')
