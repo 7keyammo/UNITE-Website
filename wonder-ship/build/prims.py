@@ -8,6 +8,7 @@ Art rules (from brief/ILLUSTRATION-BRIEF.md):
   bright, high-contrast, simple shapes; heavy outlines; nothing photoreal;
   a 3-year-old must be able to name every object in one word.
 """
+import math
 
 STROKE = "#23303a"      # single heavy outline colour used everywhere
 SW = 5                  # default stroke weight
@@ -53,13 +54,42 @@ def path(d, fill="none", stroke=STROKE, sw=SW, cap="round", join="round", dash=N
     return f'<path d="{d}" fill="{fill}"{s}{da}{o}/>'
 
 
+def capsule(x1, y1, x2, y2, color, w=13):
+    """A filled, round-capped bar between two points.
+
+    Limbs used to be stroked paths. Stroke widths do not survive every SVG
+    consumer (Canva's importer hairlines them inside nested transforms), so
+    limbs are filled geometry instead — identical on screen, robust anywhere.
+    """
+    r = w / 2.0
+    dx, dy = x2 - x1, y2 - y1
+    L = math.hypot(dx, dy)
+    if L < 0.01:
+        return circle(x1, y1, r, color, stroke=None)
+    ux, uy = dx / L, dy / L
+    nx, ny = -uy * r, ux * r
+    ax, ay = x1 + nx, y1 + ny
+    bx, by = x2 + nx, y2 + ny
+    cx, cy = x2 - nx, y2 - ny
+    dx2, dy2 = x1 - nx, y1 - ny
+    d = (f"M{ax:.1f} {ay:.1f} L{bx:.1f} {by:.1f} "
+         f"A{r:.1f} {r:.1f} 0 0 1 {cx:.1f} {cy:.1f} "
+         f"L{dx2:.1f} {dy2:.1f} A{r:.1f} {r:.1f} 0 0 1 {ax:.1f} {ay:.1f} Z")
+    return f'<path d="{d}" fill="{color}"/>'
+
+
 def limb(x1, y1, x2, y2, color, sw=13):
-    """A thick rounded line. Arms and legs are just these."""
-    return path(f"M{x1} {y1} L{x2} {y2}", stroke=color, sw=sw, cap="round")
+    """A thick rounded bar. Arms and legs are just these."""
+    return capsule(x1, y1, x2, y2, color, sw)
 
 
 def bent_limb(x1, y1, xm, ym, x2, y2, color, sw=13):
-    return path(f"M{x1} {y1} Q{xm} {ym} {x2} {y2}", stroke=color, sw=sw, cap="round")
+    """A bent limb: two bars through the curve's midpoint, joined by a knuckle."""
+    mx = 0.25 * x1 + 0.5 * xm + 0.25 * x2
+    my = 0.25 * y1 + 0.5 * ym + 0.25 * y2
+    return (capsule(x1, y1, mx, my, color, sw)
+            + capsule(mx, my, x2, y2, color, sw)
+            + circle(mx, my, sw / 2.0, color, stroke=None))
 
 
 # --------------------------------------------------------------- people
@@ -94,9 +124,9 @@ def person(x, y, s=1.0, skin="#e0ac69", hair="#3d2314", shirt="#ef476f",
         o.append(limb(14, -46, 18, -4, skin, 15))
     elif pose == "sit":
         # cross-legged: two shallow arcs meeting in the middle at floor level
-        o.append(path("M-14 -44 Q-52 -18 -6 -8 L6 -8 Q52 -18 14 -44",
-                      fill="none", stroke=skin, sw=17, cap="round"))
-        o.append(path("M-30 -12 Q0 -22 30 -12", fill="none", stroke=skin, sw=15, cap="round"))
+        o.append(bent_limb(-14, -44, -52, -18, -6, -8, skin, 17))
+        o.append(bent_limb(14, -44, 52, -18, 6, -8, skin, 17))
+        o.append(bent_limb(-30, -12, 0, -22, 30, -12, skin, 15))
     elif pose == "float":
         o.append(bent_limb(-14, -46, -40, -22, -20, 2, skin, 15))
         o.append(bent_limb(14, -46, 44, -26, 26, -2, skin, 15))
@@ -152,13 +182,13 @@ def person(x, y, s=1.0, skin="#e0ac69", hair="#3d2314", shirt="#ef476f",
     elif pose == "cup_ears":
         o.append(bent_limb(sl[0], sl[1], -70, body_top - 6, -48, hy + 12, skin))
         o.append(bent_limb(sr[0], sr[1], 70, body_top - 6, 48, hy + 12, skin))
-        o.append(path(f"M-40 {hy - 20} A26 26 0 0 0 -40 {hy + 22}", stroke=skin, sw=13))
-        o.append(path(f"M40 {hy - 20} A26 26 0 0 1 40 {hy + 22}", stroke=skin, sw=13))
+        o.append(bent_limb(-40, hy - 20, -66, hy + 1, -40, hy + 22, skin, 13))
+        o.append(bent_limb(40, hy - 20, 66, hy + 1, 40, hy + 22, skin, 13))
     elif pose == "cup_mouth":
         o.append(bent_limb(sl[0], sl[1], -58, body_top + 4, -26, hy + 20, skin))
         o.append(bent_limb(sr[0], sr[1], 58, body_top + 4, 26, hy + 20, skin))
-        o.append(path(f"M-26 {hy + 2} A22 22 0 0 0 -26 {hy + 38}", stroke=skin, sw=13))
-        o.append(path(f"M26 {hy + 2} A22 22 0 0 1 26 {hy + 38}", stroke=skin, sw=13))
+        o.append(bent_limb(-26, hy + 2, -48, hy + 20, -26, hy + 38, skin, 13))
+        o.append(bent_limb(26, hy + 2, 48, hy + 20, 26, hy + 38, skin, 13))
     elif pose == "wave_arm":
         o.append(limb(sl[0], sl[1], -52, body_top + 40, skin))
         o.append(limb(sr[0], sr[1], 58, body_top - 52, skin))
@@ -172,7 +202,7 @@ def person(x, y, s=1.0, skin="#e0ac69", hair="#3d2314", shirt="#ef476f",
         o.append(limb(sl[0], sl[1], -48, body_top + 44, skin))
         o.append(limb(sr[0], sr[1], 66, body_top - 30, skin))
         o.append(circle(66, body_top - 30, 12, skin, sw=4))
-        o.append(path(f"M66 {body_top - 30} L84 {body_top - 42}", stroke=skin, sw=7))
+        o.append(limb(66, body_top - 30, 84, body_top - 42, skin, 7))
     elif pose == "roar":
         o.append(bent_limb(sl[0], sl[1], -66, body_top - 20, -44, body_top - 46, skin))
         o.append(bent_limb(sr[0], sr[1], 66, body_top - 20, 44, body_top - 46, skin))
@@ -241,7 +271,7 @@ def domkam(x, y, s=1.0, pose="still", flip=False):
     scarf = (f'<g transform="translate({x} {y}) scale({-s if flip else s} {s})">'
              + path("M-32 -96 Q0 -84 32 -96 Q34 -78 24 -74 Q0 -64 -24 -74 Q-34 -78 -32 -96 Z",
                     fill="#ffd166", sw=4)
-             + path("M20 -74 Q30 -60 27 -46", stroke="#ffd166", sw=12)
+             + bent_limb(20, -74, 30, -60, 27, -46, "#ffd166", 12)
              + "</g>")
     return p + scarf
 
