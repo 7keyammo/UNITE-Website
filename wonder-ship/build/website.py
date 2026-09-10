@@ -22,6 +22,12 @@ from site_css import CSS                              # noqa: E402
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BOOKDIR = os.path.join(ROOT, "books")
 
+# When the site is hosted somewhere that does not carry the heavy files
+# (PDFs, EPUBs, the reader's book chunks), point those at the public repo
+# instead. Set by build(asset_base=..., reader=...).
+ASSETS = ""      # prefix for print/ ebook/ presentation/
+READER = ""      # absolute URL of the reader app, if hosted elsewhere
+
 SHIP_MARK = (
     '<svg viewBox="0 0 100 100" aria-hidden="true">'
     '<path d="M14 46q0 30 36 33t36-33q0-9-7-11H21q-7 2-7 11z" fill="#c98a4b" stroke="#23303a" stroke-width="5"/>'
@@ -55,7 +61,7 @@ def head(title, desc, depth=0):
   <a class="lnk" href="{up}index.html#books">Books</a>
   <a class="lnk" href="{up}teachers.html">Teachers</a>
   <a class="lnk" href="{up}print-pack.html">Print &amp; deliver</a>
-  <a class="lnk cta" href="{up}app/index.html">Read now</a>
+  <a class="lnk cta" href="{READER or up + 'app/index.html'}">Read now</a>
 </div></header>"""
 
 
@@ -70,7 +76,7 @@ def foot(depth=0):
   <p class="motto">Mentality Over Excuses — no materials, no excuses, all music.</p>
 </div>
 <div><h5>Read</h5>
-  <a href="{up}app/index.html">Open the library</a>
+  <a href="{READER or up + 'app/index.html'}">Open the library</a>
   <a href="{up}index.html#books">All 50 books</a>
   <a href="{up}print-pack.html">Print &amp; deliver</a>
 </div>
@@ -131,7 +137,7 @@ def landing(books):
      built on two K–2 curricula. Nothing to buy, nothing to prep — just bodies,
      voices and breath.</p>
   <div class="row">
-    <a class="btn p" href="app/index.html">Read the books free</a>
+    <a class="btn p" href="{READER or 'app/index.html'}">Read the books free</a>
     <a class="btn g" href="print-pack.html">Print &amp; have them delivered</a>
     <a class="btn s" href="#books">See all 50</a>
   </div>
@@ -245,10 +251,10 @@ def book_page(b):
     <aside class="side">
       <h4>Read or print</h4>
       <div class="dl">
-        <a class="main" href="../app/index.html#b{wk}p1">Read it now <em>free, works offline</em></a>
-        <a href="../print/{slug}.pdf" download>Print-ready PDF <em>8.5×8.5 in · 24 pp</em></a>
-        <a href="../ebook/{slug}.epub" download>EPUB ebook <em>Kindle, Apple Books</em></a>
-        <a href="../presentation/{slug}-presentation.pdf" download>Presentation <em>16:9 for smartboards</em></a>
+        <a class="main" href="{(READER + '#b' + str(wk) + 'p1') if READER else '../app/index.html#b' + str(wk) + 'p1'}">Read it now <em>free, works offline</em></a>
+        <a href="{ASSETS or "../"}print/{slug}.pdf" download>Print-ready PDF <em>8.5×8.5 in · 24 pp</em></a>
+        <a href="{ASSETS or "../"}ebook/{slug}.epub" download>EPUB ebook <em>Kindle, Apple Books</em></a>
+        <a href="{ASSETS or "../"}presentation/{slug}-presentation.pdf" download>Presentation <em>16:9 for smartboards</em></a>
         <a href="../print-pack.html?add={wk}">Add to print pack <em>order printed copies</em></a>
       </div>
     </aside>
@@ -356,6 +362,7 @@ def print_pack(books):
                        for k, v in SPEC.items())
 
     n = len(books)
+    pack_base = json.dumps((ASSETS or "") + "print/")
     return head("Print &amp; deliver — The Wonder Ship",
                 "Pick the books you want, download one print-ready pack, and take it to any "
                 "print shop. They print and deliver.") + f"""
@@ -406,7 +413,7 @@ def print_pack(books):
       <h4>Your pack</h4>
       <div class="n" id="nbooks">0 <span id="ncopies">books</span></div>
       <ul id="lines"></ul>
-      <a class="btn p" href="print/wonder-ship-print-pack.pdf" download>Download all {n} as one PDF</a>
+      <a class="btn p" href="{ASSETS}print/wonder-ship-print-pack.pdf" download>Download all {n} as one PDF</a>
       <a class="btn s" id="dl" href="#" style="margin-top:8px">Download just my selection</a>
       <a class="btn s" id="sheet" href="#" style="margin-top:8px">Print the order sheet</a>
       <div class="spec">
@@ -496,7 +503,7 @@ def print_pack(books):
     s.forEach(function(x,i){{
       setTimeout(function(){{
         var a=document.createElement('a');
-        a.href='print/'+x.slug+'.pdf'; a.download=x.slug+'.pdf';
+        a.href={pack_base}+x.slug+'.pdf'; a.download=x.slug+'.pdf';
         document.body.appendChild(a); a.click(); a.remove();
       }}, i*700);
     }});
@@ -519,7 +526,9 @@ def print_pack(books):
 
 
 # ============================================================== build
-def build():
+def build(asset_base="", reader=""):
+    global ASSETS, READER
+    ASSETS, READER = asset_base, reader
     books = all_books()
     os.makedirs(BOOKDIR, exist_ok=True)
     with open(os.path.join(ROOT, "site.css"), "w", encoding="utf-8") as f:

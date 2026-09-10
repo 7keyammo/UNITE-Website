@@ -156,7 +156,7 @@ For more than a few books the single "Download all" '
     s.forEach(function(x,i){
       setTimeout(function(){
         var a=document.createElement('a');
-        a.href='print/'+x.slug+'.pdf'; a.download=x.slug+'.pdf';
+        a.href="print/"+x.slug+'.pdf'; a.download=x.slug+'.pdf';
         document.body.appendChild(a); a.click(); a.remove();
       }, i*700);
     });

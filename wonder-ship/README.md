@@ -18,6 +18,24 @@ One book a week, fifty weeks, five terms. `build/plan.py` holds the whole year;
 | 4 · Out where there is no air | 31–40 | Waves, vacuum, energy you can see |
 | 5 · Inside the instrument | 41–50 | Resonance, the body, and the showcase |
 
+## Live site
+
+| Where | URL |
+|---|---|
+| **GitHub Pages** — the whole thing: site, reader, PDFs | https://7keyammo.github.io/UNITE-Website/wonder-ship/ |
+| Reader app direct | https://7keyammo.github.io/UNITE-Website/wonder-ship/app/ |
+| Print & deliver | https://7keyammo.github.io/UNITE-Website/wonder-ship/print-pack.html |
+
+Pages serves straight from `main` — no build step, no workflow, no `gh-pages`
+branch. Anything merged to `main` under `wonder-ship/` goes live in a minute or two.
+
+**To add Vercel as a second host:** connect GitHub in Vercel (Settings -> Login
+Connections), then import `7keyammo/UNITE-Website` and set **Root Directory** to
+`wonder-ship`. No build command and no framework — it is static files. Every push
+to `main` then deploys automatically.
+
+---
+
 ## What's here
 
 ```
