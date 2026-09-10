@@ -1,0 +1,15 @@
+{
+  "name": "The Wonder Ship",
+  "short_name": "Wonder Ship",
+  "description": "Three read-aloud picture books for ages 3, with a movement break on every page. Works offline.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b3a4a",
+  "theme_color": "#0b3a4a",
+  "categories": ["education", "books", "kids"],
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
