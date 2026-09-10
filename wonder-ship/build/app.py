@@ -102,22 +102,63 @@ def page_html(book_no, p):
             f'</div></section>')
 
 
+def shelf(books):
+    """The year, in terms. Written books open; the rest show their week."""
+    from plan import PLAN, TERMS
+    have = {b["week"]: b for b in books}
+    out = []
+    for a, z, name, blurb in TERMS:
+        out.append(f'<div class="term"><h3>{html.escape(name)}</h3>'
+                   f'<span>{html.escape(blurb)}</span></div><div class="shelf">')
+        for row in PLAN:
+            wk, slug, title, world, concepts, tag, big = row
+            if not (a <= wk <= z):
+                continue
+            b = have.get(wk)
+            if b:
+                out.append(
+                    f'<button class="card" data-week="{wk}" '
+                    f'aria-label="Open {html.escape(title)}">'
+                    f'<span class="wk">Week {wk}</span>'
+                    f'{svg(wk, 1, fill=True)}<div class="meta">'
+                    f'<h2>{html.escape(title)}</h2>'
+                    f'<div class="world">{html.escape(b["world"])} · 24 pages</div>'
+                    f'<div class="curric">{html.escape(tag)}</div>'
+                    f'<span class="go">Fly this one</span></div></button>')
+            else:
+                out.append(
+                    f'<button class="card soon" data-week="{wk}" '
+                    f'aria-label="{html.escape(title)}, arriving week {wk}">'
+                    f'<span class="wk">Week {wk}</span>'
+                    f'<div style="aspect-ratio:1000/640;position:relative;'
+                    f'background:linear-gradient(150deg,#123,#245)">'
+                    f'<div class="lock"><b>Arrives week {wk}</b></div></div>'
+                    f'<div class="meta"><h2>{html.escape(title)}</h2>'
+                    f'<div class="world">{html.escape(big)}</div>'
+                    f'<div class="curric">{html.escape(tag)}</div>'
+                    f'<span class="go">Scheduled</span></div></button>')
+        out.append("</div>")
+    return "".join(out)
+
+
 def build():
     books = all_books()
     os.makedirs(OUT, exist_ok=True)
+    os.makedirs(os.path.join(OUT, "books"), exist_ok=True)
 
-    cards = "".join(
-        f'<button class="card" aria-label="Open {html.escape(b["title"])}">'
-        f'{svg(b["number"], 1, fill=True)}<div class="meta">'
-        f'<div class="num">Book {b["number"]}</div><h2>{html.escape(b["title"])}</h2>'
-        f'<div class="world">{html.escape(b["world"])} · 24 pages · ages 3+</div>'
-        f'<span class="go">Fly this one</span></div></button>'
-        for b in books)
+    # each book is its own chunk, loaded on demand and cached offline
+    for b in books:
+        inner = "".join(page_html(b["week"], p) for p in b["model"])
+        js = ("window.__ws_book(" + str(b["week"]) + ","
+              + json.dumps(inner) + ");\n")
+        with open(os.path.join(OUT, "books", f'{b["week"]:02d}.js'), "w",
+                  encoding="utf-8") as f:
+            f.write(js)
 
-    wraps = "".join(
-        f'<div class="bookwrap hide">'
-        + "".join(page_html(b["number"], p) for p in b["model"])
-        + "</div>" for b in books)
+    cards = shelf(books)
+    wraps = ""
+    pct = round(len(books) / 50 * 100)
+    ready = len(books)
 
     def btn(bid, icon, label, extra=""):
         return (f'<button class="btn" id="{bid}" title="{label}" aria-label="{label}"{extra}>'
@@ -137,12 +178,14 @@ def build():
   <div id="library">
     <div class="lib-head">
       <div class="sup">The Wonder Ship</div>
-      <h1>Three books. No materials.</h1>
-      <p>Read-aloud adventures for ages 3, built on the STEAM&nbsp;+&nbsp;Music and
-         Energy, Frequency &amp; Vibration K–2 curricula. Every page has a movement break.
-         Works with no internet.</p>
+      <h1>A school year of read-alouds.</h1>
+      <p>Fifty weekly adventures for ages 3, built on the STEAM&nbsp;+&nbsp;Music and
+         Energy, Frequency &amp; Vibration K–2 curricula. One book a week, a movement
+         break on every page, and nothing to buy. Works with no internet.</p>
+      <div class="yearbar"><i style="width:{pct}%"></i></div>
+      <div class="yearnote">{ready} of 50 books ready · a new one every week</div>
     </div>
-    <div class="shelf">{cards}</div>
+    {cards}
     <div class="lib-foot">
       Tap the sides of a page to turn it, or swipe. <b>Read to me</b> speaks the page aloud.
       <b>Clap</b> plays the four-beat Wonder Ship Clap. <b>Notes</b> hides the teacher band
@@ -207,4 +250,7 @@ ICON_HREF = ("%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E
 
 if __name__ == "__main__":
     d = build()
-    print(f"app/index.html  —  {len(d)/1024:.0f} KB, fully self-contained")
+    import glob as _g
+    n = len(_g.glob(os.path.join(OUT, "books", "*.js")))
+    tot = sum(os.path.getsize(f) for f in _g.glob(os.path.join(OUT, "**", "*"), recursive=True) if os.path.isfile(f))
+    print(f"app/ — shell {len(d)/1024:.0f} KB + {n} book chunks, {tot/1024/1024:.1f} MB total")

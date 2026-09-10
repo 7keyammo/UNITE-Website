@@ -52,21 +52,49 @@ function flash(msg){
 
 /* ---------------- navigation ------------------------------------------ */
 function writeHash(){
-  var h = state.book===null ? '' : ('#b'+(state.book+1)+'p'+(state.page+1));
+  var h = state.book===null ? '' : ('#b'+state.book+'p'+(state.page+1));
   if(location.hash!==h){ try{history.replaceState(null,'',h||location.pathname)}catch(e){} }
 }
 function readHash(){
   var m=/^#b(\d+)p(\d+)$/.exec(location.hash||'');
   if(!m)return null;
-  var b=+m[1]-1, p=+m[2]-1;
-  if(b<0||b>2||p<0||p>23)return null;
+  var b=+m[1], p=+m[2]-1;
+  if(b<1||b>50||p<0||p>23)return null;
   return {b:b,p:p};
 }
-function openBook(i,page){
-  state.book=i; state.page=page||0;
+var LOADED={};
+window.__ws_book=function(week,html){
+  LOADED[week]=true;
+  var host=document.getElementById('stage');
+  var d=document.createElement('div');
+  d.className='bookwrap hide'; d.setAttribute('data-week',week);
+  d.innerHTML=html; host.appendChild(d);
+  if(pendingOpen&&pendingOpen.w===week){var p=pendingOpen;pendingOpen=null;openBook(p.w,p.p)}
+};
+var pendingOpen=null;
+function wrapFor(week){ return document.querySelector('.bookwrap[data-week="'+week+'"]') }
+
+function openBook(week,page){
+  var w=wrapFor(week);
+  if(!w){
+    if(LOADED[week]===undefined){
+      LOADED[week]=null; pendingOpen={w:week,p:page||0};
+      $('#library').classList.add('hide'); $('#reader').classList.remove('hide');
+      $('#pgno').textContent='loading…';
+      var sc=document.createElement('script');
+      sc.src='books/'+String(week).padStart(2,'0')+'.js';
+      sc.onerror=function(){
+        pendingOpen=null; LOADED[week]=undefined;
+        closeBook(); flash('That book is not on this device yet');
+      };
+      document.head.appendChild(sc);
+    }else{ pendingOpen={w:week,p:page||0} }
+    return;
+  }
+  state.book=week; state.page=page||0;
   $('#library').classList.add('hide');
   $('#reader').classList.remove('hide');
-  $$('.bookwrap').forEach(function(el,k){el.classList.toggle('hide',k!==i)});
+  $$('.bookwrap').forEach(function(el){el.classList.toggle('hide',el!==w)});
   render(); save(); writeHash();
 }
 function closeBook(){
@@ -76,14 +104,15 @@ function closeBook(){
   state.book=null; save(); writeHash();
 }
 function go(d){
-  var pages=$$('.pg',$$('.bookwrap')[state.book]);
+  var pages=$$('.pg',wrapFor(state.book));
   var n=state.page+d;
   if(n<0){return}
   if(n>=pages.length){flash('That is the end. Fly again any time.');return}
   state.page=n; stopSpeak(); stopClap(); render(); save(); writeHash();
 }
 function render(){
-  var wrap=$$('.bookwrap')[state.book];
+  var wrap=wrapFor(state.book);
+  if(!wrap){return}
   var pages=$$('.pg',wrap);
   pages.forEach(function(p,k){p.classList.toggle('on',k===state.page)});
   var cur=pages[state.page];
@@ -99,7 +128,7 @@ function render(){
 /* ---------------- the Wonder Ship Clap -------------------------------- */
 var clapTimer=null, clapBeat=0, clapMs=900;
 function startClap(){
-  var cur=$$('.pg',$$('.bookwrap')[state.book])[state.page];
+  var cur=$$('.pg',wrapFor(state.book))[state.page];
   var beats=$$('.beat',cur);
   if(!beats.length){ beats=$$('.beat',$('#clapbar')); $('#clapbar').classList.remove('hide'); }
   stopClap(true);
@@ -123,7 +152,15 @@ function setTempo(ms){ clapMs=ms; $('#tSlow').classList.toggle('on',ms>=900);
 
 /* ---------------- input ----------------------------------------------- */
 function bind(){
-  $$('.card').forEach(function(c,i){c.addEventListener('click',function(){openBook(i,0)})});
+  $$('.card').forEach(function(c){
+    c.addEventListener('click',function(){
+      if(this.classList.contains('soon')){
+        flash('Book '+this.getAttribute('data-week')+' arrives in week '+this.getAttribute('data-week'));
+        return;
+      }
+      openBook(+this.getAttribute('data-week'),0);
+    });
+  });
   $('#bHome').addEventListener('click',closeBook);
   $('#bNext').addEventListener('click',function(){go(1)});
   $('#bPrev').addEventListener('click',function(){go(-1)});
@@ -136,7 +173,7 @@ function bind(){
   });
   $('#bRead').addEventListener('click',function(){
     if(state.speaking){stopSpeak();return}
-    var cur=$$('.pg',$$('.bookwrap')[state.book])[state.page];
+    var cur=$$('.pg',wrapFor(state.book))[state.page];
     speak(cur.getAttribute('data-speech')||'');
   });
   $('#bClap').addEventListener('click',toggleClap);

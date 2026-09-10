@@ -132,9 +132,14 @@ def render(book):
 
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
-    raster.render_all()
+    want_canva = "--canva" in sys.argv
+    if want_canva:
+        raster.render_all()
     books = all_books()
-    for is_raster, suffix in ((False, "-presentation.html"), (True, "-presentation-canva.html")):
+    variants = [(False, "-presentation.html")]
+    if want_canva:
+        variants.append((True, "-presentation-canva.html"))
+    for is_raster, suffix in variants:
         globals()["RASTER"] = is_raster
         for b in books:
             doc = render(b)

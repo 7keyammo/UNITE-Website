@@ -80,5 +80,23 @@ def pages(book):
     return out
 
 
+def _generated():
+    """Books from week 4 onward, expanded from their specs."""
+    try:
+        import specs
+        from compose import build
+    except Exception:
+        return []
+    return [build(specs.SPECS[w]) for w in sorted(specs.SPECS)]
+
+
+def catalogue():
+    """Every book that currently exists, in week order."""
+    out = list(BOOKS) + _generated()
+    for i, b in enumerate(out):
+        b.setdefault("week", b["number"])
+    return sorted(out, key=lambda b: b["week"])
+
+
 def all_books():
-    return [dict(b, model=pages(b)) for b in BOOKS]
+    return [dict(b, model=pages(b)) for b in catalogue()]

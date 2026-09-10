@@ -1,19 +1,22 @@
 # The Wonder Ship
 
-A three-book read-aloud picture book series for ages 3 (preschool / TK), built as the pre-K on-ramp to two existing K–2 curricula:
+A **50-week school year** of read-aloud picture books for ages 3 (preschool / TK), built as the pre-K on-ramp to two existing K–2 curricula:
 
 - **STEAM + Music** — 15 classes, Grades K–2
 - **Energy, Frequency & Vibration** — 15 lessons, Grades K–2
 
 Every book runs on the same engine as those curricula: **voice, clapping, stomping, humming, breath, movement, imagination. No materials.**
 
-| # | Title | World | The big feeling |
-|---|---|---|---|
-| 1 | Into the Deep | Underwater | Sound can be soft, slow, and muffled |
-| 2 | Among the Stars | Outer space | Sound can be *absent* — and you still carry your own |
-| 3 | Back to the Dinosaurs | Prehistoric | Sound can be enormous, and the world answers back |
+One book a week, fifty weeks, five terms. `build/plan.py` holds the whole year;
+`build/bot.py` writes the next one.
 
----
+| Term | Weeks | Thread |
+|---|---|---|
+| 1 · Feeling sound | 1–10 | Vibration, energy, the body as an instrument |
+| 2 · Fast, slow, big, small | 11–20 | Frequency and amplitude as two separate dials |
+| 3 · Where sound goes | 21–30 | Travel, echo, absorption, acoustics |
+| 4 · Out where there is no air | 31–40 | Waves, vacuum, energy you can see |
+| 5 · Inside the instrument | 41–50 | Resonance, the body, and the showcase |
 
 ## What's here
 

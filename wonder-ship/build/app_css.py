@@ -27,8 +27,29 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;touch-
 .lib-head .sup{font-size:13px;letter-spacing:.34em;text-transform:uppercase;color:var(--light);font-weight:800}
 .lib-head h1{font-size:clamp(30px,7vw,52px);margin:8px 0 6px;font-weight:800;letter-spacing:-.5px}
 .lib-head p{color:#cfe6ea;font-size:clamp(14px,3.4vw,17px);max-width:52ch;margin:0 auto;line-height:1.5}
-.shelf{display:grid;gap:18px;grid-template-columns:1fr;max-width:1180px;margin:26px auto 0}
-@media(min-width:760px){.shelf{grid-template-columns:repeat(3,1fr)}}
+.shelf{display:grid;gap:16px;grid-template-columns:1fr;max-width:1240px;margin:18px auto 0}
+@media(min-width:560px){.shelf{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:900px){.shelf{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:1220px){.shelf{grid-template-columns:repeat(4,1fr)}}
+.term{max-width:1240px;margin:30px auto 6px;color:#cfe6ea;display:flex;
+  align-items:baseline;gap:12px;flex-wrap:wrap;padding:0 2px}
+.term h3{font-size:clamp(15px,3.4vw,20px);color:#fff;font-weight:800}
+.term span{font-size:13px;color:#9fc4cc}
+.term::after{content:"";flex:1 1 60px;height:2px;background:rgba(255,255,255,.14)}
+.card{position:relative}
+.card .wk{position:absolute;top:10px;left:10px;background:rgba(11,58,74,.9);color:#fff;
+  font-size:11px;font-weight:800;letter-spacing:.1em;padding:4px 9px;border-radius:999px;z-index:2}
+.card.soon{opacity:.5}
+.card.soon .go{background:#8aa;color:#123}
+.card .curric{font-size:11px;color:#7d8f97;margin-top:6px;line-height:1.35}
+.lock{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(11,58,74,.55);z-index:1;border-radius:22px}
+.lock b{background:#fffaf0;color:#0b3a4a;padding:8px 16px;border-radius:999px;
+  font-size:13px;font-weight:800}
+.yearbar{max-width:1240px;margin:14px auto 0;background:rgba(255,255,255,.10);
+  border-radius:999px;height:10px;overflow:hidden}
+.yearbar i{display:block;height:100%;background:var(--accent)}
+.yearnote{max-width:1240px;margin:8px auto 0;color:#9fc4cc;font-size:13px;text-align:center}
 .card{background:var(--paper);border-radius:22px;overflow:hidden;text-align:left;
   box-shadow:0 12px 34px rgba(0,0,0,.4);display:flex;flex-direction:column;
   transition:transform .16s ease}

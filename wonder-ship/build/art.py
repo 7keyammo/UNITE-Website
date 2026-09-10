@@ -650,9 +650,67 @@ B3[20] = lambda w: "".join([                                  # say your name to
 
 BOOK_SCENES = {1: B1, 2: B2, 3: B3}
 
+# --- generated books (week 4 onward) ---------------------------------------
+_ENGINE = {}
+
+
+def _engine_book(book):
+    """(World, [10 scene keys]) for a generated book, or None for books 1-3."""
+    if book in _ENGINE:
+        return _ENGINE[book]
+    try:
+        from plan import by_week
+        from worlds import WORLDS as WMAP
+        from compose import scene_plan
+        row = by_week(book)
+        val = (WMAP[row[3]], scene_plan(row[4]))
+    except Exception:
+        val = None
+    _ENGINE[book] = val
+    return val
+
+
+def _engine_scene(book, page):
+    import scenes as S
+    world, plan10 = _engine_book(book)
+    pal = world.pal()
+    if page == 1:
+        return sc_title(pal, book)
+    if page == 2:
+        return sc_note(pal)
+    if page in (3, 21):
+        return sc_breathe_in(pal)
+    if page == 4:
+        return sc_breathe_out(pal)
+    if page == 5:
+        return sc_clap_slow(pal)
+    if page == 6:
+        return sc_clap_fast(pal)
+    if page == 22:
+        return sc_clap_fast(pal, pilots=False)
+    if page == 23:
+        return classroom(pal, ship_glow=0, kid_pose="clap", face="happy",
+                         extra=domkam(428, 452, 0.62, pose="clap")
+                               + johnson(586, 448, 0.62, pose="point", flip=True))
+    if page == 24:
+        return sc_theme(pal)
+    if page == 7:
+        return S.b_departure(world)
+    if page == 8:
+        return S.b_porthole(world)
+    if page == 9:
+        return S.b_arrival(world)
+    if page == 10:
+        return S.b_reveal(world)
+    if 11 <= page <= 20:
+        return S.CONCEPTS[plan10[page - 11]](world)
+    raise KeyError((book, page))
+
 
 def scene(book, page):
     """Return SVG markup for one page of one book."""
+    if book not in BOOK_SCENES:
+        return _engine_scene(book, page)
     w = WORLDS[book]
     if page == 1:
         return sc_title(w, book)
@@ -708,6 +766,24 @@ _SPECIAL = {
 
 def bg_color(book, page):
     """The colour the letterbox bands should be for this page."""
+    if book not in WORLDS:
+        eng = _engine_book(book)
+        if eng:
+            world = eng[0]
+            if page == 2:
+                return world.sand
+            if page in (8, 24):
+                return world.deep
+            if page in (1, 3, 4, 5, 6, 21, 22, 23):
+                return world.sky
+            if page == 7:
+                return world.deep if world.kind == "space" else "#4aa3c4"
+            if world.kind == "space":
+                return world.deep
+            if world.kind == "water":
+                return world.mid
+            return world.sky
+        return "#0b3a4a"
     if (book, page) in _SPECIAL:
         return _SPECIAL[(book, page)]
     if page == 2:

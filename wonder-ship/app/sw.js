@@ -1,14 +1,33 @@
 /* The Wonder Ship — offline cache.
-   index.html is fully self-contained, so this is a tiny shell cache:
-   once visited, the app opens with no network at all. */
-var CACHE = 'wondership-v1';
-var ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
+   The shell holds the library; each book is a chunk fetched on first open.
+   Everything already released is precached, so the whole year works with no
+   network once the app has been opened one time. */
+var CACHE = 'wondership-v2';
+var ASSETS = [
+  "./",
+  "./index.html",
+  "./manifest.webmanifest",
+  "./icon.svg",
+  "./books/01.js",
+  "./books/02.js",
+  "./books/03.js",
+  "./books/04.js",
+  "./books/05.js",
+  "./books/06.js",
+  "./books/07.js",
+  "./books/08.js",
+  "./books/09.js",
+  "./books/10.js",
+  "./books/11.js",
+  "./books/12.js",
+  "./books/13.js"
+];
 
 self.addEventListener('install', function (e) {
   self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(function (c) {
     return Promise.all(ASSETS.map(function (u) {
-      return c.add(u).catch(function () { /* a missing optional asset must not fail install */ });
+      return c.add(u).catch(function () { /* a missing chunk must not fail install */ });
     }));
   }));
 });
@@ -32,7 +51,7 @@ self.addEventListener('fetch', function (e) {
         }
         return res;
       }).catch(function () {
-        return caches.match('./index.html');
+        return e.request.mode === 'navigate' ? caches.match('./index.html') : undefined;
       });
     })
   );

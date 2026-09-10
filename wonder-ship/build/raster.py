@@ -26,9 +26,15 @@ def png_path(book, page):
     return os.path.join(CACHE, f"b{book}p{page:02d}.png")
 
 
-def render_all(force=False):
+def all_weeks():
+    from content import catalogue
+    return [b["week"] for b in catalogue()]
+
+
+def render_all(force=False, weeks=None):
     os.makedirs(CACHE, exist_ok=True)
-    todo = [(b, p) for b in (1, 2, 3) for p in range(1, 25)
+    weeks = weeks or all_weeks()
+    todo = [(b, p) for b in weeks for p in range(1, 25)
             if force or not os.path.exists(png_path(b, p))]
     if not todo:
         return 0
@@ -69,6 +75,8 @@ def data_uri(book, page):
 
 if __name__ == "__main__":
     n = render_all(force="--force" in sys.argv)
-    total = sum(os.path.getsize(png_path(b, p)) for b in (1, 2, 3) for p in range(1, 25))
-    print(f"rasterised {n} scenes ({72} cached) — {total/1024/1024:.1f} MB total, "
-          f"avg {total/72/1024:.0f} KB")
+    weeks = all_weeks()
+    have = [(b, p) for b in weeks for p in range(1, 25) if os.path.exists(png_path(b, p))]
+    total = sum(os.path.getsize(png_path(b, p)) for b, p in have)
+    print(f"rasterised {n} new — {len(have)} scenes cached, {total/1024/1024:.1f} MB, "
+          f"avg {total/max(1,len(have))/1024:.0f} KB")
