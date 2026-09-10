@@ -8,7 +8,7 @@ One book a week, until the school year is full.
     python3 bot.py next            the brief for the next unwritten week
     python3 bot.py template [wk]   a ready-to-fill spec to paste into specs.py
     python3 bot.py check           validate every spec
-    python3 bot.py build [--pdf]   regenerate every output format
+    python3 bot.py build [--pdf]   regenerate every output format + the website
     python3 bot.py ship            check, build, and report what changed
 
 Writing the words is the one step a machine should not fake: `next` prints
@@ -167,7 +167,7 @@ CHROME = os.environ.get("CHROME", "/opt/pw-browsers/chromium-1194/chrome-linux/c
 
 def cmd_build(pdf=False):
     print("building every format:")
-    for m in ("render.py", "app.py", "deck.py", "epub.py"):
+    for m in ("render.py", "app.py", "deck.py", "epub.py", "website.py"):
         _run(m)
     if pdf:
         print("  PDFs ...", end=" ", flush=True)
@@ -181,9 +181,8 @@ def cmd_build(pdf=False):
                             f"--print-to-pdf={out}", "file://" + src],
                            capture_output=True)
             n += 1
-        for f in glob.glob(os.path.join(ROOT, "print", "*.pdf")):
-            pass
         print(f"ok ({n})")
+        _run("pack.py")          # merged print pack, after the book PDFs exist
     print("done")
 
 
