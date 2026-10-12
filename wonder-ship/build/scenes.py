@@ -405,3 +405,27 @@ CONCEPTS = {
     "resonance": c_resonance, "layers": c_layers, "absorb": c_absorb,
     "travel": c_travel, "hero": c_hero, "close_up": c_close_up,
 }
+
+
+# ------------------------------------------------- choose-page art
+def c_option_icon(w, i=0, **kw):
+    """A small badge of one of the world's creatures, for a choose button."""
+    return "".join([
+        f'<rect width="{W}" height="{H}" rx="40" fill="{w.mid}"/>',
+        circle(500, 320, 250, shade(w.light, .25, "#ffffff"), stroke=None)
+        .replace("/>", ' opacity="0.5"/>'),
+        w.creature(i, 500, 430 if w.kind not in ("water", "space") else 360, 2.6),
+    ])
+
+
+def c_option_scene(w, i=0, **kw):
+    """That creature, arriving in the world — shown after the children pick."""
+    o = [w.bg(), w.floor(), w.scenery(i + 2, 3)]
+    o.append(w.creature(i, 540, 330 if w.kind == "water" else w.horizon + 90, 2.1))
+    o.append(sound_rings(250, 300, 3, 46, w.accent, 7, 90, .6, 110))
+    o.append(w.airborne(i, 3))
+    return "".join(o)
+
+
+CONCEPTS["option_icon"] = c_option_icon
+CONCEPTS["option_scene"] = c_option_scene
