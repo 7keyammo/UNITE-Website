@@ -12,6 +12,7 @@ import html
 import json
 import os
 import sys
+from urllib.parse import quote
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import art                                            # noqa: E402
@@ -57,10 +58,14 @@ def head(title, desc, depth=0):
 <link rel="stylesheet" href="{up}site.css">
 </head><body>
 <header class="nav"><div class="wrap">
-  <a class="brand" href="{up}index.html">{SHIP_MARK}<span>The Wonder Ship</span></a>
-  <a class="lnk" href="{up}index.html#books">Books</a>
-  <a class="lnk" href="{up}teachers.html">Teachers</a>
-  <a class="lnk" href="{up}print-pack.html">Print &amp; deliver</a>
+  <a class="brand" href="{up}index.html">{SHIP_MARK}<span>UNITE STEAM</span></a>
+  <nav class="navlinks">
+    <a class="lnk" href="{up}books.html">Books</a>
+    <a class="lnk" href="{up}saturday-school.html">Saturday School</a>
+    <a class="lnk" href="{up}pricing.html">Pricing</a>
+    <a class="lnk" href="{up}teachers.html">Teachers</a>
+    <a class="lnk" href="{up}print-pack.html">Print</a>
+  </nav>
   <a class="lnk cta" href="{READER or up + 'app/index.html'}">Read now</a>
 </div></header>"""
 
@@ -69,21 +74,27 @@ def foot(depth=0):
     up = "../" * depth
     return f"""<footer><div class="wrap">
 <div>
-  <h5>The Wonder Ship</h5>
-  <p>Fifty weekly read-aloud picture books for ages 3, built on the STEAM&nbsp;+&nbsp;Music
-     and Energy, Frequency &amp; Vibration K–2 curricula. Piloted by Mr.&nbsp;Domkam and
-     Mr.&nbsp;Johnson.</p>
+  <h5>UNITE STEAM</h5>
+  <p>Unique Natives Interacting Together Elevating. An Afrocentric, youth-led future
+     grounded in truth, love, and science. Oakland, California.</p>
+  <p>The Wonder Ship is fifty weekly read-aloud picture books for ages 3, built on the
+     STEAM&nbsp;+&nbsp;Music and Energy, Frequency &amp; Vibration K–2 curricula, piloted
+     by Mr.&nbsp;Domkam and Mr.&nbsp;Johnson.</p>
   <p class="motto">Mentality Over Excuses — no materials, no excuses, all music.</p>
 </div>
-<div><h5>Read</h5>
+<div><h5>Learn</h5>
   <a href="{READER or up + 'app/index.html'}">Open the library</a>
-  <a href="{up}index.html#books">All 50 books</a>
+  <a href="{up}books.html">All 50 books</a>
+  <a href="{up}saturday-school.html">Saturday School</a>
+  <a href="{up}pricing.html">Offerings &amp; pricing</a>
   <a href="{up}print-pack.html">Print &amp; deliver</a>
 </div>
-<div><h5>Teachers</h5>
-  <a href="{up}teachers.html">Curriculum map</a>
-  <a href="{up}brief/TEACHER-GUIDE.md">Teacher guide</a>
-  <a href="{up}brief/ILLUSTRATION-BRIEF.md">Illustration brief</a>
+<div><h5>More</h5>
+  <a href="{up}teachers.html">For teachers</a>
+  <a href="https://unitehella.org" target="_blank" rel="noopener">unitehella.org</a>
+  <a href="mailto:unitehella@gmail.com">unitehella@gmail.com</a>
+  <a href="{up}privacy.html">Privacy</a>
+  <a href="{up}terms.html">Terms</a>
 </div>
 </div></footer></body></html>"""
 
@@ -96,7 +107,7 @@ ICONS = {
 
 
 # ============================================================== landing
-def landing(books):
+def books_page(books):
     have = {b["week"]: b for b in books}
     n = len(books)
 
@@ -126,11 +137,11 @@ def landing(books):
                     f'<span class="go">Scheduled</span></div></div>')
         shelves.append("</div>")
 
-    return head("The Wonder Ship — a school year of read-aloud books for ages 3",
+    return head("The books — The Wonder Ship · UNITE STEAM",
                 "Fifty weekly picture books for 3-year-olds with a movement break on every "
                 "page. Read online free, or print and have them delivered.") + f"""
 <section class="hero"><div class="wrap">
-  <div class="sup">The Wonder Ship</div>
+  <div class="sup">The Homeschool Hub · The Wonder Ship</div>
   <h1>A school year of read-alouds. No materials.</h1>
   <p class="lede">Fifty weekly picture books for three-year-olds, piloted by
      Mr.&nbsp;Domkam and Mr.&nbsp;Johnson. Every page has a movement break. Every book is
@@ -139,7 +150,7 @@ def landing(books):
   <div class="row">
     <a class="btn p" href="{READER or 'app/index.html'}">Read the books free</a>
     <a class="btn g" href="print-pack.html">Print &amp; have them delivered</a>
-    <a class="btn s" href="#books">See all 50</a>
+    <a class="btn s" href="index.html">About UNITE STEAM</a>
   </div>
   <div class="stats">
     <div class="stat"><b>{n}</b><span>books ready now</span></div>
@@ -226,7 +237,7 @@ def book_page(b):
                 f'every page. Read free online or print it.', depth=1) + f"""
 <div class="bkhead"><div class="cover">{cover(wk)}</div></div>
 <div class="bkbody"><div class="wrap">
-  <div class="crumb"><a href="../index.html">All books</a> · Week {wk}</div>
+  <div class="crumb"><a href="../books.html">All books</a> · Week {wk}</div>
   <h1>{html.escape(title)}</h1>
   <div class="big">{html.escape(big)}</div>
   <div class="pills">
@@ -333,6 +344,261 @@ def teachers(books):
       <p style="margin-top:10px"><a class="btn s" style="background:var(--mid);font-size:14px;padding:9px 18px"
          href="brief/ILLUSTRATION-BRIEF.md">Open</a></p></div>
   </div>
+</div></section>
+""" + foot()
+
+
+# ============================================================ UNITE pages
+import unite as U                                      # noqa: E402
+
+
+def _icon(kind):
+    d = {
+        "school": "<path d='M4 10 12 5l8 5v9H4z'/><path d='M9 19v-5h6v5'/>",
+        "ship": "<path d='M4 13q0 6 8 6t8-6'/><path d='M3 10h18'/><circle cx='12' cy='12' r='2.6'/>",
+        "seed": "<path d='M12 21V11'/><path d='M12 11c0-4 3-6 7-6 0 4-3 6-7 6z'/>"
+                "<path d='M12 14C9 14 6 12 5 8c4-1 7 1 7 6z'/>",
+    }[kind]
+    return (f"<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.9' "
+            f"stroke-linecap='round' stroke-linejoin='round'>{d}</svg>")
+
+
+def impact_band():
+    stats = "".join(f'<div class="stat"><b>{v}</b><span>{html.escape(l)}</span></div>'
+                    for v, l in U.IMPACT)
+    return (f'<div class="statband">{stats}</div>'
+            f'<p class="statnote">{html.escape(U.IMPACT_NOTE)}</p>')
+
+
+def price_grid(order=("homeschool", "saturday")):
+    """All three billing periods, switched client-side. No JS, no prices."""
+    plans = {p["key"]: p for p in U.PLANS}
+    def _tog(k, lab):
+        cls = ' class="active"' if k == "monthly" else ""
+        return f'<button type="button" data-cad="{k}"{cls}>{lab}</button>'
+
+    toggle = "".join(_tog(k, lab) for k, lab, _sfx, _m in U.CADENCES)
+    cards = []
+    for key in order:
+        p = plans[key]
+        feats = "".join(f"<li>{html.escape(f)}</li>" for f in p["features"])
+        prices = []
+        for k, _lab, sfx, months in U.CADENCES:
+            amount = p["price"][k]
+            per = amount / months
+            sub = ("" if k == "monthly" else
+                   f'<span class="permo">about ${per:.2f}/mo · save '
+                   f'{round((1 - per / p["price"]["monthly"]) * 100)}%</span>')
+            prices.append(f'<div class="pr" data-cad="{k}"{"" if k == "monthly" else " hidden"}>'
+                          f'<span class="amt">${amount}</span><span class="sfx">{sfx}</span>{sub}</div>')
+        cards.append(
+            f'<div class="pricecard{" featured" if p["featured"] else ""}">'
+            + ('<span class="badge">Most complete</span>' if p["featured"] else "")
+            + f'<h3>{html.escape(p["name"])}</h3>'
+            f'<p class="pblurb">{html.escape(p["blurb"])}</p>'
+            f'<div class="prices">{"".join(prices)}</div>'
+            f'<ul class="feats">{feats}</ul>'
+            f'<a class="btn p" href="mailto:{U.ORG["email"]}'
+            f'?subject={quote("UNITE STEAM — " + p["name"])}">Ask about this plan</a></div>')
+    return (f'<div class="cadence" role="group" aria-label="Billing period">{toggle}</div>'
+            f'<div class="pricegrid">{"".join(cards)}</div>'
+            + PRICE_JS)
+
+
+PRICE_JS = """
+<script>
+(function(){
+  var btns=[].slice.call(document.querySelectorAll('.cadence button'));
+  btns.forEach(function(b){
+    b.addEventListener('click',function(){
+      var c=b.dataset.cad;
+      btns.forEach(function(x){x.classList.toggle('active',x===b)});
+      [].forEach.call(document.querySelectorAll('.pr'),function(p){
+        p.hidden = p.dataset.cad!==c;
+      });
+    });
+  });
+})();
+</script>"""
+
+
+def shelves_block(n_books):
+    out = []
+    for s in U.SHELVES:
+        if s["on"]:
+            out.append(
+                f'<a class="acard on" href="{s["href"]}"><span class="wm">{html.escape(s["name"])}</span>'
+                f'<span class="sub">{html.escape(s["sub"])}</span>'
+                f'<span class="count">{s["count"].format(n=n_books)}</span></a>')
+        else:
+            out.append(
+                f'<div class="acard off"><span class="wm">{html.escape(s["name"])}</span>'
+                f'<span class="sub">{html.escape(s["sub"])}</span>'
+                f'<span class="count">{html.escape(s["count"])}</span>'
+                f'<span class="note">{html.escape(s.get("note",""))}</span></div>')
+    return '<div class="ages">' + "".join(out) + "</div>"
+
+
+def unite_home(books):
+    n = len(books)
+    progs = "".join(
+        f'<a class="prog" href="{p["href"]}"><span class="ico">{_icon(p["icon"])}</span>'
+        f'<h3>{html.escape(p["name"])}</h3><p>{html.escape(p["text"])}</p>'
+        f'<span class="go">{html.escape(p["go"])} &rarr;</span></a>' for p in U.PROGRAMS)
+    custom = "".join(f'<div><b>{html.escape(t)}</b><span>{html.escape(d)}</span></div>'
+                     for t, d in U.CUSTOM)
+    steps = "".join(f'<li><div><b>{html.escape(t)}</b><span>{html.escape(d)}</span></div></li>'
+                    for t, d in U.STEPS)
+    return head(f'{U.ORG["name"]} — {U.ORG["tagline"]}', U.ORG["lede"]) + f"""
+<section class="hero"><div class="wrap">
+  <div class="sup">UNITE · {html.escape(U.ORG["expand"])}</div>
+  <h1>Building stronger communities, <em>one step at a time.</em></h1>
+  <p class="lede">{html.escape(U.ORG["lede"])}</p>
+  <div class="row">
+    <a class="btn g" href="#register">Register today</a>
+    <a class="btn p" href="pricing.html">See offerings &amp; pricing</a>
+    <a class="btn s" href="books.html">Read the books free</a>
+  </div>
+</div>
+<div class="ship" aria-hidden="true">{cover(1)}</div>
+</section>
+
+<section><div class="wrap">
+  {impact_band()}
+  <div class="sechead" style="margin-top:46px">
+    <span class="label">Our programs</span>
+    <h2 class="sec">Three ways to learn with UNITE.</h2>
+    <p class="sub">Pick the one that fits your family. Saturday School always includes
+       the Homeschool Hub.</p>
+  </div>
+  <div class="progs">{progs}</div>
+  <div class="custom">{custom}</div>
+</div></section>
+
+<section class="alt"><div class="wrap">
+  <span class="label">The Homeschool Hub</span>
+  <h2 class="sec">The Wonder Ship — a school year of read-alouds.</h2>
+  <p class="sub">Fifty weekly picture books for three-year-olds, piloted by
+     Mr.&nbsp;Domkam and Mr.&nbsp;Johnson. Every page has a movement break. Every book is
+     built on two K–2 curricula. {n} are written so far, and a new one arrives every week.</p>
+  <div class="row" style="margin-bottom:26px">
+    <a class="btn p" href="books.html">Browse all 50 books</a>
+    <a class="btn s" style="background:var(--mid)" href="print-pack.html">Print &amp; deliver</a>
+  </div>
+  <h3 style="font-size:20px;font-weight:800;color:var(--deep);margin-bottom:6px">
+    Browse the Homeschool Hub by age</h3>
+  <p class="sub">1 of 5 shelves built.</p>
+  {shelves_block(n)}
+</div></section>
+
+<section id="register"><div class="wrap">
+  <span class="label">How to register</span>
+  <h2 class="sec">Four steps to get started.</h2>
+  <p class="sub">Tell us what you’re interested in, or go straight to a plan.</p>
+  <div class="regwrap">
+    <ol class="steps4">{steps}</ol>
+    <div class="regbox">
+      <h4>Register your interest</h4>
+      <p>Accounts and card payment open with the members site. Until then, email us and
+         we’ll get you set up by hand — tell us your child’s age range and whether you
+         want the Hub, Saturday School, or something custom.</p>
+      <a class="btn p" href="mailto:{U.ORG["email"]}?subject={quote("UNITE STEAM — register my interest")}&amp;body={quote("Child age range:%0D%0AInterested in (Hub / Saturday School / custom):%0D%0ACity:%0D%0AAnything else:")}">Email {U.ORG["email"]}</a>
+      <p class="small">Or visit <a href="{U.ORG["org_site"]}" target="_blank" rel="noopener">unitehella.org</a>.</p>
+    </div>
+  </div>
+</div></section>
+
+<section class="alt"><div class="wrap">
+  <span class="label">Our mission</span>
+  <h2 class="sec">Truth, love, and science.</h2>
+  <p class="sub" style="font-size:clamp(16px,2.2vw,20px);max-width:66ch">
+    {html.escape(U.ORG["mission"])}</p>
+</div></section>
+""" + foot()
+
+
+def saturday_page(books):
+    S_ = U.SATURDAY
+    running = "".join(f"<p>{html.escape(t)}</p>" for t in S_["running"])
+    meta = "".join(f"<span>{html.escape(m)}</span>" for m in S_["meta"])
+    inc = "".join(f"<li>{html.escape(i)}</li>" for i in S_["included"])
+    return head("Saturday School — UNITE STEAM", S_["lede"]) + f"""
+<section class="hero" style="padding:52px 0 44px"><div class="wrap">
+  <div class="sup">{html.escape(S_["kicker"])}</div>
+  <h1 style="font-size:clamp(30px,6vw,52px)">Saturday School</h1>
+  <p class="lede">{html.escape(S_["lede"])}</p>
+</div></section>
+
+<section><div class="wrap"><div class="satwrap">
+  <div class="satcard">
+    <span class="label">Currently running</span>
+    <h3>{html.escape(S_["running_title"])}</h3>
+    {running}
+    <div class="satmeta">{meta}</div>
+  </div>
+  <div class="satcard tint">
+    <h3>What’s included</h3>
+    <ul class="ticks">{inc}</ul>
+    <p class="seatnote">{html.escape(S_["seatnote"])}</p>
+  </div>
+</div></div></section>
+
+<section class="alt"><div class="wrap">
+  <h2 class="sec">Choose how you join</h2>
+  <p class="sub">{html.escape(U.PRICE_NOTE)}</p>
+  {price_grid(("saturday", "homeschool"))}
+</div></section>
+""" + foot()
+
+
+def pricing_page(books):
+    rungs = "".join(
+        f'<div class="rung"><div class="num">{i+1}</div><div><h3>{html.escape(t)}</h3>'
+        f'<p>{html.escape(d)}</p><span class="tag">{html.escape(tag)}</span></div></div>'
+        for i, (t, d, tag) in enumerate(U.LADDER))
+    return head("Offerings &amp; pricing — UNITE STEAM",
+                "From free open content to custom curriculum design for organizations.") + f"""
+<section class="hero" style="padding:52px 0 44px"><div class="wrap">
+  <div class="sup">UNITE STEAM offerings</div>
+  <h1 style="font-size:clamp(30px,6vw,52px)">Five ways to work with us.</h1>
+  <p class="lede">From free open content to custom curriculum design for organizations.
+     Pick the level that fits your family or your team.</p>
+</div></section>
+
+<section><div class="wrap">
+  <div class="ladder">{rungs}</div>
+</div></section>
+
+<section class="alt"><div class="wrap">
+  <h2 class="sec">Homeschool Hub &amp; Saturday School</h2>
+  <p class="sub">{html.escape(U.PRICE_NOTE)}</p>
+  {price_grid(("homeschool", "saturday"))}
+  <div class="notice">
+    <b>Card payment isn’t switched on yet.</b> Email
+    <a href="mailto:{U.ORG["email"]}">{U.ORG["email"]}</a> and we’ll set you up by hand
+    in the meantime. The books on this site stay free to read and print either way.
+  </div>
+</div></section>
+
+<section id="custom"><div class="wrap">
+  <h2 class="sec">Custom work &amp; community projects</h2>
+  <p class="sub">Personalized curriculum, private tutoring and organization work are
+     priced to fit. Tell us what you need and we’ll follow up with a quote.</p>
+  <a class="btn p" href="mailto:{U.ORG["email"]}?subject={quote("UNITE STEAM — custom work enquiry")}">Email us about custom work</a>
+</div></section>
+""" + foot()
+
+
+def legal_page(title, sections, desc):
+    body = "".join(
+        f"<h2>{html.escape(h)}</h2>" + "".join(
+            (b if b.lstrip().startswith("<") else f"<p>{b}</p>") for b in paras)
+        for h, paras in sections)
+    return head(f"{title} — UNITE STEAM", desc) + f"""
+<section><div class="wrap prose">
+  <h1 class="sec" style="font-size:clamp(28px,5vw,42px)">{html.escape(title)}</h1>
+  <div class="notice">{html.escape(U.LEGAL_NOTE)}</div>
+  {body}
 </div></section>
 """ + foot()
 
@@ -534,7 +800,19 @@ def build(asset_base="", reader=""):
     with open(os.path.join(ROOT, "site.css"), "w", encoding="utf-8") as f:
         f.write(CSS)
     with open(os.path.join(ROOT, "index.html"), "w", encoding="utf-8") as f:
-        f.write(landing(books))
+        f.write(unite_home(books))
+    with open(os.path.join(ROOT, "books.html"), "w", encoding="utf-8") as f:
+        f.write(books_page(books))
+    with open(os.path.join(ROOT, "saturday-school.html"), "w", encoding="utf-8") as f:
+        f.write(saturday_page(books))
+    with open(os.path.join(ROOT, "pricing.html"), "w", encoding="utf-8") as f:
+        f.write(pricing_page(books))
+    with open(os.path.join(ROOT, "privacy.html"), "w", encoding="utf-8") as f:
+        f.write(legal_page("Privacy policy", U.PRIVACY,
+                           "How UNITE STEAM handles accounts, payments and form data."))
+    with open(os.path.join(ROOT, "terms.html"), "w", encoding="utf-8") as f:
+        f.write(legal_page("Terms of service", U.TERMS,
+                           "Membership, cancelling, Saturday School and content terms."))
     with open(os.path.join(ROOT, "teachers.html"), "w", encoding="utf-8") as f:
         f.write(teachers(books))
     with open(os.path.join(ROOT, "print-pack.html"), "w", encoding="utf-8") as f:
@@ -547,4 +825,5 @@ def build(asset_base="", reader=""):
 
 if __name__ == "__main__":
     bs = build()
-    print(f"site built — landing + teachers + print pack + {len(bs)} book pages")
+    print(f"site built — home, books, Saturday School, pricing, teachers, print pack, "
+          f"privacy, terms + {len(bs)} book pages")
